@@ -24,6 +24,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+import time as _time
+
 class TipoAnimo:
     AMOR=0
     ALEGRIA=1
@@ -54,11 +56,12 @@ class AnimodelMundo:
 			self.ratios_animo_mundial = [-1]*NUM_TIPOS_ANIMO #list initializated to None
 			self.all_tpm = [-1]*NUM_TIPOS_ANIMO #list with tweets per second per Animo
 			self.animo_mundial_avg = [-1]*NUM_TIPOS_ANIMO #movig average of the world mood
-			RATIOS_ANIMO_MUNDIAL = [-1]*NUM_TIPOS_ANIMO #ratios long term
+			self.timestamp = 0
 	
 	def registrar_tweets(self, animoID, tpm):
 		#debug
 		self.tpm = tpm
+		self.timestamp = _time.time()
 		if (animoID < 0 or animoID > NUM_TIPOS_ANIMO or tpm < 0):
 			print 'Valores incorrectos de entrada para registrar tweets'
 		a = self.factor_suavizado_emocion
@@ -70,7 +73,7 @@ class AnimodelMundo:
 		else:
 			#aplicamos exponential moving averages
 			self.animo_mundial_avg[animoID] = self.animo_mundial_avg[animoID] * (1 - a) + tpm * a
-			print 'animo at T  '+str(self.animo_mundial_avg)
+			print 'timestamp: '+str(self.timestamp)+' animo at T  '+str(self.animo_mundial_avg)
 			
 	def calcula_intensidad_animo_actual(self):
 		#aqui calculamos como de intenso es el ánimo actual
@@ -78,13 +81,13 @@ class AnimodelMundo:
 		#this will show the mood ratio as a divergence from the norm, and so is a good measure of mood intensity.
 		percent = self.ratios_animo_mundial[self.ANIMO_MUNDIAL] / self.ratios_temperamento[self.ANIMO_MUNDIAL]
 		if (percent > self.extremo_umbral_animo):
-			print 'Intensidad EXTREMO con percent= '+str(percent)
+			print 'timestamp: '+str(self.timestamp)+' Intensidad EXTREMO con percent= '+str(percent)
 			return IntensidadAnimo.EXTREMO
 		elif (percent > self.moderado_umbral_animo):
-			print 'Intensidad CONSIDERABLE con percent= '+str(percent)
+			print 'timestamp: '+str(self.timestamp)+' Intensidad CONSIDERABLE con percent= '+str(percent)
 			return IntensidadAnimo.CONSIDERABLE
 		else:
-			print 'Intensidad MEDIO con percent= '+str(percent)
+			print 'timestamp: '+str(self.timestamp)+' Intensidad MEDIO con percent= '+str(percent)
 			return IntensidadAnimo.MEDIO
 		
 	def calcula_animo_actual(self):
@@ -94,8 +97,8 @@ class AnimodelMundo:
 			sum += self.animo_mundial_avg[i]
 		for i in range(NUM_TIPOS_ANIMO):
 			self.ratios_animo_mundial[i]=self.animo_mundial_avg[i]/sum
-		print 'animo        at T'+str(self.ratios_animo_mundial)
-		print 'temperamento at T-1'+str(self.ratios_temperamento)
+		print 'timestamp: '+str(self.timestamp)+' animo        at T'+str(self.ratios_animo_mundial)
+		print 'timestamp: '+str(self.timestamp)+' temperamento at T-1'+str(self.ratios_temperamento)
 		#Ahora calculamos el ánimo que se ha incrementado más como una proporción del moving average
 		#find the ratio that has increased by the most, as a proportion of its moving average.
 		#So that, for example, an increase from 5% to 10% is more significant than an increase from 50% to 55%.
@@ -108,7 +111,7 @@ class AnimodelMundo:
 				maxIncrease = difference
 				#este es el animo más influyente ahora mismo.
 				#print 'this is the Animo mundial, ID='+str(i)
-				ANIMO_MUNDIAL = i
+				self.ANIMO_MUNDIAL = i
 				#calculating actual temperament ratio.
 		
 		
@@ -123,5 +126,5 @@ class AnimodelMundo:
 			sum += self.ratios_temperamento[i]
 		for i in range(NUM_TIPOS_ANIMO):
 			self.ratios_temperamento[i]=self.ratios_temperamento[i]/sum
-		print 'temperamento at T  '+str(self.ratios_temperamento)
-		print 'El animo mundial es ahora: '+str(ANIMO_MUNDIAL)
+		print 'timestamp: '+str(self.timestamp)+' temperamento at T  '+str(self.ratios_temperamento)
+		print 'timestamp: '+str(self.timestamp)+' El animo mundial es ahora: '+str(self.ANIMO_MUNDIAL)
