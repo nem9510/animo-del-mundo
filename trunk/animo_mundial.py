@@ -63,7 +63,7 @@ def time_string_to_stamp(date_string):
 	stamp = _time.mktime(tt)
 	return stamp
 
-def parse_tps(animoID,c):
+def parse_tps(animoID):
 	print 'query_dict[animoID]= '+query_dict[animoID]
 	#query can be done either json or atom
 	base_url='http://search.twitter.com/search.json?q='+query_dict[animoID]+'&rpp=30&locale=es&result_type=recent'
@@ -84,13 +84,12 @@ def parse_tps(animoID,c):
 		tps = 30 / (tstart - tend)
 	else:
 		print 'We shouldnt be here, as this is bad'
-		tps = c.all_tpm[animoID] / 60 #If we cannot get value from http we keep the old one
-		b ='' #nothing as we didnt get it
+		tps= c.all_tpm[animoID] / 60 #If we cannot get value from http we keep the old one
 	#returning the tweets per second and all the message just in case we have an alert
 	return tps,b
 	
 def setserial(animoID,flash):
-	ser = serial.Serial('/dev/ttyACM0')
+	ser = serial.Serial('/dev/ttyACM1')
 	print ser.portstr  # check which port was really used
 	print 'writing animoID to LED= '+str(animoID)
 	ser.write(str(animoID))      # write a string
@@ -102,14 +101,15 @@ def setserial(animoID,flash):
 	ser.close()
 
 def send_mail(text_msg,animoID):
+	#you'll have to adapt the settings below for yourself
 	msg = {}
 	msg = MIMEMultipart('alternative')
-	me = ['blog@myanimal.es']
-	them = ['madremiaque@gmail.com']
+	me = ['me@mydomain.es']
+	them = ['you@yourdomain.es']
 	msg['Subject'] = 'Alerta - alta intensidad para la emoción: '+str(animoID)
-	msg['From'] = "blog@myanimal.es"
+	msg['From'] = "me@mydomain.es"
 	msg['Cc'] = ''
-	msg['To'] = "madremiaque@gmail.com"
+	msg['To'] = "you@yourdomain.es"
 	#part0 = MIMEText("default msg", 'plain') 
 	part1 = MIMEText(text_msg,'plain')
 	#msg.attach(part0)
@@ -128,7 +128,7 @@ def main():
 		flash = False
 		#rellenando todos los tps
 		for animoID in range(NUM_TIPOS_ANIMO):
-			tps,msg_email = parse_tps(animoID,c)
+			tps,msg_email = parse_tps(animoID)
 			#trabajemos con tweets por minuto
 			tpm = tps * 60
 			c.registrar_tweets(animoID,tpm)
