@@ -104,8 +104,8 @@ def setserial(animoID,flash):
 def send_mail(text_msg,animoID):
 	msg = {}
 	msg = MIMEMultipart('alternative')
-	me = ['blog@myanimal.es']
-	them = ['madremiaque@gmail.com']
+	me = ['me@mydomain.es']
+	them = ['you@yourdomain.es']
 	msg['Subject'] = 'Alerta - alta intensidad para la emoción: '+str(animoID)
 	msg['From'] = "me@mydomain.es"
 	msg['Cc'] = ''
