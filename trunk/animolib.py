@@ -62,18 +62,22 @@ class AnimodelMundo:
 		#debug
 		self.tpm = tpm
 		self.timestamp = _time.time()
+		print tpm
 		if (animoID < 0 or animoID > NUM_TIPOS_ANIMO or tpm < 0):
 			print 'Valores incorrectos de entrada para registrar tweets'
-		a = self.factor_suavizado_emocion
-		if (self.animo_mundial_avg[animoID] == -1):
-			#Primera vez en el bucle
-			#not sure about below array if we'll use it or not
-			#self.all_tpm[animoID] = tpm
-			self.animo_mundial_avg[animoID] = tpm
+			print 'We would not do calculations with this'
 		else:
-			#aplicamos exponential moving averages
-			self.animo_mundial_avg[animoID] = self.animo_mundial_avg[animoID] * (1 - a) + tpm * a
-			print 'timestamp: '+str(self.timestamp)+' animo at T  '+str(self.animo_mundial_avg)
+			a = self.factor_suavizado_emocion
+			if (self.animo_mundial_avg[animoID] == -1):
+				print 'Primera vez en el bucle'
+				#not sure about below array if we'll use it or not
+				#self.all_tpm[animoID] = tpm
+				self.animo_mundial_avg[animoID] = tpm
+			else:
+				#aplicamos exponential moving averages
+				print 'calculating=>'+'animo_mundial_avg='+str(self.animo_mundial_avg[animoID])+'*'+'(1 -'+str(a)+')'+'+'+str(tpm)+'*'+str(a)
+				self.animo_mundial_avg[animoID] = self.animo_mundial_avg[animoID] * (1 - a) + tpm * a
+				print 'timestamp: '+str(self.timestamp)+' animo at T  '+str(self.animo_mundial_avg)
 			
 	def calcula_intensidad_animo_actual(self):
 		#aqui calculamos como de intenso es el ánimo actual
@@ -94,6 +98,7 @@ class AnimodelMundo:
 		#primero calculamos los ratios
 		sum = 0
 		for i in range(NUM_TIPOS_ANIMO):
+			print 'self.animo_mundial_avg['+str(i)+']='+str(self.animo_mundial_avg[i])
 			sum += self.animo_mundial_avg[i]
 		for i in range(NUM_TIPOS_ANIMO):
 			self.ratios_animo_mundial[i]=self.animo_mundial_avg[i]/sum
