@@ -75,9 +75,9 @@ class AnimodelMundo:
 				self.animo_mundial_avg[animoID] = tpm
 			else:
 				#aplicamos exponential moving averages
-				print 'calculating=>'+'animo_mundial_avg='+str(self.animo_mundial_avg[animoID])+'*'+'(1 -'+str(a)+')'+'+'+str(tpm)+'*'+str(a)
+				print 'calculating===>'+'animo_mundial_avg='+str(self.animo_mundial_avg[animoID])+'*'+'(1 -'+str(a)+')'+'+'+str(tpm)+'*'+str(a)
 				self.animo_mundial_avg[animoID] = self.animo_mundial_avg[animoID] * (1 - a) + tpm * a
-				print 'timestamp: '+str(self.timestamp)+' animo at T  '+str(self.animo_mundial_avg)
+				print 'timestamp: '+str(self.timestamp)+'animo_mundial_avg=='+str(self.animo_mundial_avg)
 			
 	def calcula_intensidad_animo_actual(self):
 		#aqui calculamos como de intenso es el ánimo actual
