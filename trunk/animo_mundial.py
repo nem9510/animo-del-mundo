@@ -84,13 +84,11 @@ def parse_tps(animoID,c):
 		tps = 30 / (tstart - tend)
 	else:
 		print 'We shouldnt be here, as this is bad'
-		tps = c.all_tpm[animoID] / 60 #If we cannot get value from http we keep the old one
-		b ='' #nothing as we didnt get it
 	#returning the tweets per second and all the message just in case we have an alert
 	return tps,b
 	
 def setserial(animoID,flash):
-	ser = serial.Serial('/dev/ttyACM0')
+	ser = serial.Serial('/dev/ttyACM1')
 	print ser.portstr  # check which port was really used
 	print 'writing animoID to LED= '+str(animoID)
 	ser.write(str(animoID))      # write a string
@@ -104,12 +102,12 @@ def setserial(animoID,flash):
 def send_mail(text_msg,animoID):
 	msg = {}
 	msg = MIMEMultipart('alternative')
-	me = ['me@mydomain.es']
-	them = ['you@yourdomain.es']
+	me = ['youremail']
+	them = ['theirs']
 	msg['Subject'] = 'Alerta - alta intensidad para la emoción: '+str(animoID)
-	msg['From'] = "me@mydomain.es"
+	msg['From'] = "youremail"
 	msg['Cc'] = ''
-	msg['To'] = "you@yourdomain.es"
+	msg['To'] = "theirs"
 	#part0 = MIMEText("default msg", 'plain') 
 	part1 = MIMEText(text_msg,'plain')
 	#msg.attach(part0)
@@ -122,20 +120,23 @@ def send_mail(text_msg,animoID):
 def main():
 	#the initial ratios can be adapted to normal mood so you dont receive alert
 	#while starting the code, but otherwise is useful for testing email and flashing.
-	c = AnimodelMundo(0.4,0.05,2,4,[0.1,0.1,0.1,0.1,0.1,0.1,0.1],'None')
+	c = AnimodelMundo(0.9,0.05,2,4,[0.18,0.18,0.35,0.04,0.06, 0.04,0.11],'None')
+	msg_dict = {}
 	#led will not flash unless something big happens
 	while True:
 		flash = False
 		#rellenando todos los tps
 		for animoID in range(NUM_TIPOS_ANIMO):
-			tps,msg_email = parse_tps(animoID,c)
+			tps,msg_dict[animoID] = parse_tps(animoID,c)
 			#trabajemos con tweets por minuto
 			tpm = tps * 60
 			c.registrar_tweets(animoID,tpm)
-			c.calcula_animo_actual()
+		c.calcula_animo_actual()
 		intensity = c.calcula_intensidad_animo_actual()
 		print "la intensidad actual es= "+str(intensity)
 		if (intensity == IntensidadAnimo.EXTREMO or intensity == IntensidadAnimo.CONSIDERABLE):
+				#taking tweets from right emotion to send
+				msg_email = msg_dict[c.ANIMO_MUNDIAL]
 				print "sending mail and flashing"
 				send_mail(msg_email,c.ANIMO_MUNDIAL)
 				flash = True
