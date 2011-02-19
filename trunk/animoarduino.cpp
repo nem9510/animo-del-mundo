@@ -24,10 +24,10 @@ typedef struct
   
 // default colours
 const Color Colors[] = {
-  (Color){255, 0,   0},   // red
   (Color){255, 128, 128}, // pink
   (Color){255, 255, 0},   // yellow
   (Color){255, 96, 0},    // orange
+  (Color){255, 0,   0},   // red
   (Color){0,   255, 0},   // green
   (Color){0,   0,   255}, // blue
   (Color){255, 255, 255}, // white
@@ -48,7 +48,7 @@ int greenIntensity = 0;
 int blueIntensity = 0;
 
 // Length of time we spend showing each color
-const int DISPLAY_TIME = 50; // In milliseconds
+const int DISPLAY_TIME = 10; // In milliseconds
 
 void setup() {
   // set the data rate for the SoftwareSerial port
@@ -80,8 +80,15 @@ void setcolor_withfade(int newcolorID, int lastcolorID) {
   Serial.println(newcolorID);
     Serial.println("last color was: ");
   Serial.println(lastcolorID);
-        if (Colors[newcolorID].r > Colors[lastcolorID].r){
-          for (redIntensity = Colors[lastcolorID].r; redIntensity <= Colors[newcolorID].r ; redIntensity+=10) {
+        if (Colors[newcolorID].r == Colors[lastcolorID].r){
+          redIntensity = Colors[lastcolorID].r;
+          Serial.println("Maintaining R channel");
+          Serial.println(redIntensity);
+          analogWrite(RED_LED_PIN, redIntensity);
+          delay(DISPLAY_TIME);
+        }
+        else if (Colors[newcolorID].r > Colors[lastcolorID].r){
+          for (redIntensity = Colors[lastcolorID].r; redIntensity <= Colors[newcolorID].r ; redIntensity+=1) {
                   Serial.println("changing R channel");
                   Serial.println(redIntensity);
                   analogWrite(RED_LED_PIN, redIntensity);
@@ -89,15 +96,22 @@ void setcolor_withfade(int newcolorID, int lastcolorID) {
                 }
         }
         else if (Colors[newcolorID].r < Colors[lastcolorID].r){
-          for (redIntensity = Colors[lastcolorID].r; redIntensity >= Colors[newcolorID].r ; redIntensity-=10) {
+          for (redIntensity = Colors[lastcolorID].r; redIntensity >= Colors[newcolorID].r ; redIntensity-=1) {
                   Serial.println("changing R channel");
                   Serial.println(redIntensity);
                   analogWrite(RED_LED_PIN, redIntensity);
                   delay(DISPLAY_TIME);
                 }
         }
-        if (Colors[newcolorID].g > Colors[lastcolorID].g){
-          for (greenIntensity = Colors[lastcolorID].g; greenIntensity <= Colors[newcolorID].g ; greenIntensity+=10) {
+        if (Colors[newcolorID].g == Colors[lastcolorID].g){
+          greenIntensity = Colors[lastcolorID].g;
+          Serial.println("Maintaining G channel");
+          Serial.println(greenIntensity);
+          analogWrite(GREEN_LED_PIN, greenIntensity);
+          delay(DISPLAY_TIME);
+        }
+        else if (Colors[newcolorID].g > Colors[lastcolorID].g){
+          for (greenIntensity = Colors[lastcolorID].g; greenIntensity <= Colors[newcolorID].g ; greenIntensity+=1) {
                   Serial.println(greenIntensity);
                   Serial.println("changing G channel");
                   analogWrite(GREEN_LED_PIN, greenIntensity);
@@ -105,15 +119,22 @@ void setcolor_withfade(int newcolorID, int lastcolorID) {
                 }
         }
         else if (Colors[newcolorID].g < Colors[lastcolorID].g){
-          for (greenIntensity = Colors[lastcolorID].g; greenIntensity >= Colors[newcolorID].g ; greenIntensity-=10) {
+          for (greenIntensity = Colors[lastcolorID].g; greenIntensity >= Colors[newcolorID].g ; greenIntensity-=1) {
                   Serial.println("changing G channel");
                   Serial.println(greenIntensity);
                   analogWrite(GREEN_LED_PIN, greenIntensity);
                   delay(DISPLAY_TIME);
                 }
         }
-        if (Colors[newcolorID].b > Colors[lastcolorID].b){
-          for (blueIntensity = Colors[lastcolorID].b; blueIntensity <= Colors[newcolorID].b ; blueIntensity+=10) {
+        if (Colors[newcolorID].b == Colors[lastcolorID].b){
+          blueIntensity = Colors[lastcolorID].b;
+          Serial.println("Maintaining B channel");
+          Serial.println(blueIntensity);
+          analogWrite(BLUE_LED_PIN, blueIntensity);
+          delay(DISPLAY_TIME);
+        }
+        else if (Colors[newcolorID].b > Colors[lastcolorID].b){
+          for (blueIntensity = Colors[lastcolorID].b; blueIntensity <= Colors[newcolorID].b ; blueIntensity+=1) {
                   Serial.println("changing B channel");
                   Serial.println(blueIntensity);
                   analogWrite(BLUE_LED_PIN, blueIntensity);
@@ -121,7 +142,7 @@ void setcolor_withfade(int newcolorID, int lastcolorID) {
                 }
         }
         else if (Colors[newcolorID].b < Colors[lastcolorID].b){
-          for (blueIntensity = Colors[lastcolorID].b; blueIntensity >= Colors[newcolorID].b ; blueIntensity-=10) {
+          for (blueIntensity = Colors[lastcolorID].b; blueIntensity >= Colors[newcolorID].b ; blueIntensity-=1) {
                   Serial.println("changing B channel");
                   Serial.println(blueIntensity);
                   analogWrite(BLUE_LED_PIN, blueIntensity);
