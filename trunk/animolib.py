@@ -71,9 +71,11 @@ class AnimodelMundo:
 			if (self.animo_mundial_avg[animoID] == -1):
 				print 'Primera vez en el bucle'
 				#not sure about below array if we'll use it or not
-				#self.all_tpm[animoID] = tpm
+				self.all_tpm[animoID] = tpm
 				self.animo_mundial_avg[animoID] = tpm
 			else:
+				#registering tpm as it is useful for preventing failures
+				self.all_tpm[animoID] = tpm
 				#aplicamos exponential moving averages
 				print 'calculating===>'+'animo_mundial_avg='+str(self.animo_mundial_avg[animoID])+'*'+'(1 -'+str(a)+')'+'+'+str(tpm)+'*'+str(a)
 				self.animo_mundial_avg[animoID] = self.animo_mundial_avg[animoID] * (1 - a) + tpm * a

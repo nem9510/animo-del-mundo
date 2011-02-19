@@ -35,7 +35,10 @@ import serial
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-
+import io
+import subprocess
+from subprocess import call
+import os
 
 AMOR_QUERY = '\"te+quiero+mucho\"+OR+\"te+quiero+más\"+OR+\"amo+tanto\"+OR+\"amo+tanto\"+OR+\"todo+mi+amor\"+OR+\"muy+enamorado\"+OR+\"tan+enamorada\"'
 IRA_QUERY='\"te+odio\"+OR+\"siento+rabia\"+OR+\"le+odio\"+OR+\"estoy+furioso\"+OR+\"estoy+furiosa\"+OR+\"crispado\"+OR+\"estoy+cabreado\"'
@@ -54,6 +57,22 @@ query_dict = {
 4:ENVIDIA_QUERY,
 5:TRISTEZA_QUERY,
 6:MIEDO_QUERY
+}
+
+emotion_dict = {
+0:'AMOR',
+1:'ALEGRIA',
+2:'SORPRESA',
+3:'IRA',
+4:'ENVIDIA',
+5:'TRISTEZA',
+6:'MIEDO'
+}
+
+intensity_dict = {
+0:'MEDIO',
+1:'CONSIDERABLE',
+2:'EXTREMO',
 }
 
 def time_string_to_stamp(date_string):
@@ -84,11 +103,14 @@ def parse_tps(animoID,c):
 		tps = 30 / (tstart - tend)
 	else:
 		print 'We shouldnt be here, as this is bad'
+		#as failure we take the last value of tps, not bad :-)
+		tps = c.all_tpm[animoID]
+		b =''
 	#returning the tweets per second and all the message just in case we have an alert
 	return tps,b
 	
 def setserial(animoID,flash):
-	ser = serial.Serial('/dev/ttyACM1')
+	ser = serial.Serial('/dev/ttyACM0')
 	print ser.portstr  # check which port was really used
 	print 'writing animoID to LED= '+str(animoID)
 	ser.write(str(animoID))      # write a string
@@ -102,12 +124,12 @@ def setserial(animoID,flash):
 def send_mail(text_msg,animoID):
 	msg = {}
 	msg = MIMEMultipart('alternative')
-	me = ['youremail']
-	them = ['theirs']
+	me = ['myemail']
+	them = ['youremail']
 	msg['Subject'] = 'Alerta - alta intensidad para la emoción: '+str(animoID)
-	msg['From'] = "youremail"
+	msg['From'] = "myemail"
 	msg['Cc'] = ''
-	msg['To'] = "theirs"
+	msg['To'] = "youremail"
 	#part0 = MIMEText("default msg", 'plain') 
 	part1 = MIMEText(text_msg,'plain')
 	#msg.attach(part0)
@@ -116,11 +138,72 @@ def send_mail(text_msg,animoID):
 	s.sendmail(me, them, msg.as_string())
 	s.close
 
+def register_plot(all_tpm,ratios_animo_mundial,ratios_temperamento):
+	print 'Writing data to tps.txt'
+	f = open('./plots/all_tpm.txt', 'a')
+	s =''
+        t = str(_time.time())
+        for i in range(NUM_TIPOS_ANIMO):
+	   s += ' '+str(all_tpm[i])
+        s = t + s + '\n'
+	print s
+	f.write(s)
+	f.close
+	print 'Writing data to ratios_animo.txt'
+        f = open('./plots/ratios_animo.txt', 'a')
+        s =''
+        t = str(_time.time())
+        for i in range(NUM_TIPOS_ANIMO):
+           s += ' '+str(ratios_animo_mundial[i])
+        s = t + s + '\n'
+        print s
+        f.write(s)
+        f.close
+        print 'Writing data to ratios_temperatmento.txt'
+        f = open('./plots/ratios_temperamento.txt', 'a')
+        s =''
+        t = str(_time.time())
+        for i in range(NUM_TIPOS_ANIMO):
+           s += ' '+str(ratios_temperamento[i])
+        s = t + s + '\n'
+        print s
+        f.write(s)
+        f.close
+
+def write_to_html(intenID,animoID):
+	f = open('/home/Dropbox/Public/animo.html', 'w')
+        s ="""<html> 
+            <head> 
+	    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/> 
+	    <META HTTP-EQUIV="refresh" CONTENT="60"> 
+	    </head> 
+	    <body>"""
+        s+= '<h3>El ánimo mundial es: '+str(emotion_dict[animoID])+' con intensidad: '+str(intensity_dict[intenID])+'</h3>'
+	s+= """<img src="./all_tpm.png" alt="Emoción instantánea" /> 
+	    <img src="./ratios_animo.png" alt="Animo ratio" /> 
+	    <img src="./ratios_temperamento.png" alt="Temperamento ratio" />""" 
+	dirList=os.listdir('/home/Dropbox/Public/alerts/')
+	s+= """<table border="1">"""
+	s+="""<tr><td>Alertas</td></tr>"""
+	for fname in dirList:
+	    print fname
+            s+= '<tr><td>'+'<a href="./alerts/'+str(fname)+'">'+str(fname)+'</a>'+'</td></tr>'
+        s+= """</table>
+	    </body> 
+	    </html>"""
+	f.write(s)
+	f.close
+
+def register_alert(text_msg,animoID):
+	print 'Writing data to alerts'
+        f = open('/home/Dropbox/Public/alerts/alerts_'+str(emotion_dict[animoID])+'_'+str(_time.time())+'.txt', 'a')
+        f.write(text_msg)
+	f.close
 	
 def main():
 	#the initial ratios can be adapted to normal mood so you dont receive alert
 	#while starting the code, but otherwise is useful for testing email and flashing.
-	c = AnimodelMundo(0.9,0.05,2,4,[0.18,0.18,0.35,0.04,0.06, 0.04,0.11],'None')
+	c = AnimodelMundo(0.6,0.05,2,4,[0.18,0.18,0.35,0.04,0.06, 0.04,0.11],'None')
 	msg_dict = {}
 	#led will not flash unless something big happens
 	while True:
@@ -133,13 +216,19 @@ def main():
 			c.registrar_tweets(animoID,tpm)
 		c.calcula_animo_actual()
 		intensity = c.calcula_intensidad_animo_actual()
+		register_plot(c.all_tpm,c.ratios_animo_mundial,c.ratios_temperamento)
+		#actually ploting chart
+		retcode = subprocess.call(["gnuplot", "./plots/animo.dat"])
+		print 'returning code for ploting is= '+str(retcode)
 		print "la intensidad actual es= "+str(intensity)
+		write_to_html(intensity,c.ANIMO_MUNDIAL)
 		if (intensity == IntensidadAnimo.EXTREMO or intensity == IntensidadAnimo.CONSIDERABLE):
 				#taking tweets from right emotion to send
 				msg_email = msg_dict[c.ANIMO_MUNDIAL]
 				print "sending mail and flashing"
 				send_mail(msg_email,c.ANIMO_MUNDIAL)
 				flash = True
+				register_alert(msg_email,c.ANIMO_MUNDIAL)
 		print 'timestamp: '+str(_time.time())+' setting colorid '+str(c.ANIMO_MUNDIAL)
 		setserial(c.ANIMO_MUNDIAL,flash)
 		_time.sleep(60)
