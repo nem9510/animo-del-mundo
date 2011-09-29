@@ -94,7 +94,7 @@ def time_string_to_stamp(date_string):
 def parse_tps(animoID,c):
         print 'query_dict[animoID]= '+query_dict[animoID]
         #query can be done either json or atom
-        base_url='http://search.twitter.com/search.json?q='+query_dict[animoID]+'&rpp=30&locale=es&result_type=recent'
+        base_url='http://search.twitter.com/search.json?q='+query_dict[animoID]+'&rpp=30&lang=es&result_type=recent'
         f = 0
         try:
                 f = urllib2.urlopen(base_url)
