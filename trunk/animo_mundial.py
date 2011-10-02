@@ -39,9 +39,8 @@ import io
 import subprocess
 from subprocess import call
 import os
+import time
 
-#we put some files inside dropbox foder that it is inside our home dir
-home_dir='/home/here_goes_your_linux_user'
 
 #AMOR_QUERY = '"te quiero mucho" OR "te quiero más" OR "amo tanto" OR "amo tanto" OR "todo mi amor" OR "muy enamorado" OR "tan enamorada"'
 #IRA_QUERY='"te odio" OR "siento rabia" OR "le odio" OR "estoy furioso" OR "estoy furiosa" OR "crispado" OR "estoy cabreado"'
@@ -50,6 +49,9 @@ home_dir='/home/here_goes_your_linux_user'
 #ENVIDIA_QUERY='ambiciono OR codicio OR "mucha envidia" OR "yo quiero ser" OR "por que no puedo" OR envidio OR celoso'
 #TRISTEZA_QUERY='"muy triste" OR "tan deprimido" OR "estoy llorando" OR "tengo el corazón roto" OR "estoy triste" OR "me quiero morir"'
 #MIEDO_QUERY='"muy asustado" OR "tan asustada" OR "realmente asustado" OR terrorifico OR "tanto temor" OR "que horror" OR aterrozizado'
+
+
+AMOR_QUERY='%22te%20quiero%20mucho%22%20OR%20%22te%20quiero%20m%C3%A1s%22%20OR%20%22amo%20tanto%22%20OR%20%22amo%20tanto%22%20OR%20%22todo%20mi%20amor%22%20OR%20%22muy%20enamorado%22%20OR%20%22tan%20enamorada%22'
 IRA_QUERY='%22te%20odio%22%20OR%20%22siento%20rabia%22%20OR%20%22le%20odio%22%20OR%20%22estoy%20furioso%22%20OR%20%22estoy%20furiosa%22%20OR%20%22crispado%22%20OR%20%22estoy%20cabreado%22'
 ALEGRIA_QUERY='%22mas%20feliz%22%20OR%20%22bastante%20feliz%22%20OR%20%22tan%20feliz%22%20OR%20%22muy%20feliz%22%20OR%20gozo%20OR%20j%C3%BAbilo%20OR%20deleite%20OR%20alborozo%20OR%20juerga'
 SORPRESA_QUERY='%22no%20me%20lo%20puedo%20creer%22%20OR%20increible%20OR%20asombro%20OR%20%22me%20ha%20sorprendido%22%20OR%20%22te%20ha%20sorprendido%22%20OR%20%22cogido%20por%20sorpresa%22'
@@ -186,23 +188,32 @@ def register_plot(all_tpm,ratios_animo_mundial,ratios_temperamento):
         f.close
 
 def write_to_html(intenID,animoID):
-        f = open(home_dir+'/Dropbox/Public/animo.html', 'w')
+        content = {}
+        f = open('/home/user/Dropbox/Public/animo.html', 'w')
         s ="""<html> 
             <head> 
-            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/> 
+	    <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"/> 
             <META HTTP-EQUIV="refresh" CONTENT="60"> 
             </head> 
             <body>"""
-        s+= '<h3>El ánimo mundial es: '+str(emotion_dict[animoID])+' con intensidad: '+str(intensity_dict[intenID])+'</h3>'
-        s+= """<img src="./all_tpm.png" alt="Emoción instantánea" /> 
+        s+= '<h3>El &aacute;nimo mundial es: '+str(emotion_dict[animoID])+' con intensidad: '+str(intensity_dict[intenID])+'</h3>'
+        s+= """<img src="./all_tpm.png" alt="Emoci&oacute;n instant&aacute;nea" /> 
             <img src="./ratios_animo.png" alt="Animo ratio" /> 
             <img src="./ratios_temperamento.png" alt="Temperamento ratio" />""" 
-        dirList=os.listdir(home_dir+'/Dropbox/Public/alerts/')
+        dirList=os.listdir('/home/user/Dropbox/Public/alerts/')
+	s+= """<p> Puedes ver como he dise&ntilde;ado todo <a href="http://madremiamadremiaque.blogspot.com/2011/02/midiendo-el-animo-del-mundo.html">AQU&Iacute;</a></p>"""
         s+= """<table border="1">"""
-        s+="""<tr><td>Alertas</td></tr>"""
-        for fname in dirList:
-            print fname
-            s+= '<tr><td>'+'<a href="./alerts/'+str(fname)+'">'+str(fname)+'</a>'+'</td></tr>'
+        s+="""<tr><td>Alertas</td><td>Timestamp</td></tr>"""
+	#build up directory of time stamps
+        for item in dirList:
+	    full_path='/home/user/Dropbox/Public/alerts/'+str(item)
+	    content[item] = os.path.getmtime(full_path)
+        #sort keys, based on time stamps
+	items = content.keys()
+	items.sort(lambda x,y: cmp(content[x],content[y]), reverse=True)
+	#report items in order writing them into html table
+	for item in items:
+            s+= '<tr><td>'+'<a href="./alerts/'+str(item)+'">'+str(item)+'</a>'+'</td><td>'+str(time.ctime(content[item]))+'</td></tr>'
         s+= """</table>
             </body> 
             </html>"""
@@ -211,14 +222,14 @@ def write_to_html(intenID,animoID):
 
 def register_alert(text_msg,animoID):
         print 'Writing data to alerts'
-        f = open(home_dir+'/Dropbox/Public/alerts/alerts_'+str(emotion_dict[animoID])+'_'+str(_time.time())+'.txt', 'a')
+        f = open('/home/user/Dropbox/Public/alerts/alerts_'+str(emotion_dict[animoID])+'_'+str(_time.time())+'.txt', 'a')
         f.write(text_msg)
         f.close
         
 def main():
         #the initial ratios can be adapted to normal mood so you dont receive alert
         #while starting the code, but otherwise is useful for testing email and flashing.
-        c = AnimodelMundo(0.6,0.05,2,4,[0.18,0.18,0.35,0.04,0.06, 0.04,0.11],'None')
+        c = AnimodelMundo(0.6,0.05,2.5,4,[0.18,0.18,0.35,0.04,0.06, 0.04,0.11],'None')
         msg_dict = {}
         #led will not flash unless something big happens
         while True:
