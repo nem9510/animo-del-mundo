@@ -1,6 +1,12 @@
 set terminal png size 1300,400
-datey="`date +%d/%m/%y\t%H%M --date='1 days ago'`"
-daten="`date +%d/%m/%y\t%H%M`"
+#linux
+#datey="`date +%d/%m/%y\t%H%M --date='1 days ago'`"
+#mac
+datey="`date -v-1d "+%d/%m/%y %H%M"`"
+#linux
+#daten="`date +%d/%m/%y\t%H%M`"
+#mac
+daten="`date "+%d/%m/%y %H%M"`"
 set key left top
 set grid
 set title "Ánimo instantáneo del mundo"
@@ -12,7 +18,7 @@ set xrange [datey: ]
 set format x "%d/%m\n%H:%M"
 set ylabel "tweets por minuto"
 set timefmt "%s"
-set output  "/home/Dropbox/Public/all_tpm.png"
+set output  "/Users/dani/Dropbox/Public/all_tpm.png"
 plot './plots/all_tpm.txt' using 1:2 with lines title 'Amor' linecolor rgb "pink", \
 './plots/all_tpm.txt' using 1:3 with lines title 'Alegría' linecolor rgb "yellow", \
 './plots/all_tpm.txt' using 1:4 with lines title 'Sorpresa' linecolor rgb "orange", \
@@ -33,7 +39,7 @@ set xrange [datey: ]
 set format x "%d/%m\n%H:%M"
 set ylabel "ratios animo mundial"
 set timefmt "%s"
-set output  "/home/Dropbox/Public/ratios_animo.png"
+set output  "/Users/dani/Dropbox/Public/ratios_animo.png"
 plot './plots/ratios_animo.txt' using 1:2 with lines title 'Amor' linecolor rgb "pink", \
 './plots/ratios_animo.txt' using 1:3 with lines title 'Alegría' linecolor rgb "yellow", \
 './plots/ratios_animo.txt' using 1:4 with lines title 'Sorpresa' linecolor rgb "orange", \
@@ -54,7 +60,7 @@ set xrange [datey: ]
 set format x "%d/%m\n%H:%M"
 set ylabel "ratios temperamento mundial"
 set timefmt "%s"
-set output  "/home/Dropbox/Public/ratios_temperamento.png"
+set output  "/Users/dani/Dropbox/Public/ratios_temperamento.png"
 plot './plots/ratios_temperamento.txt' using 1:2 with lines title 'Amor' linecolor rgb "pink", \
 './plots/ratios_temperamento.txt' using 1:3 with lines title 'Alegría' linecolor rgb "yellow", \
 './plots/ratios_temperamento.txt' using 1:4 with lines title 'Sorpresa' linecolor rgb "orange", \
