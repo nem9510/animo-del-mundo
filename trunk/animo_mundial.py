@@ -96,27 +96,44 @@ def time_string_to_stamp(date_string):
 def parse_tps(animoID,c):
         print 'query_dict[animoID]= '+query_dict[animoID]
         #query can be done either json or atom
-        base_url='http://search.twitter.com/search.json?q='+query_dict[animoID]+'&rpp=30&lang=es&result_type=recent'
+        base_url='http://search.twitter.com/search.json?q='+query_dict[animoID]+'&rpp=60&lang=es&result_type=recent'
         f = 0
         try:
-                f = urllib2.urlopen(base_url)
+                f = urllib2.urlopen(base_url, timeout = 3)
+	#except urllib2.URLError, (err):
+	except Exception, (err):
+                print "Opening error(%s)" % (err)
+		pass
+	try:
 		a = json.loads(f.read())
 		b = json.dumps(a, sort_keys=True, indent=4)
-        except urllib2.URLError, (err):
-                print "URL error(%s)" % (err)
-        if (f != 0 and len(a['results']) == 30 and b != None):
+	except Exception,e:
+		print "We did our best but couldn't parse json from twitter due to: " + str(e)
+		a = dict()
+		#a['results'[0]] = 0
+		a[('results')] = '0'
+		b =''
+		pass
+        if (f != 0 and len(a['results']) == 60 and b != None):
                 #debug
                 first_tw_time = a['results'][0]['created_at']
 		print "first_tw_time="+first_tw_time
-                last_tw_time= a['results'][29]['created_at']
+                last_tw_time= a['results'][59]['created_at']
 		print "last_tw_time"+last_tw_time
                 tstart = time_string_to_stamp(first_tw_time)
 		print "tstart="+str(tstart)
                 tend = time_string_to_stamp(last_tw_time)
 		print "tend="+str(tend)
-                tps = 30 / (tstart - tend)
+		try:   
+		    tps = 60 / (tstart - tend)
+        	except Exception, (err):
+                    print "Exception error(%s)" % (err)
+		    if ((tstart -tend) == 0):
+			#aprox, probably more than 600 tweets
+			tps = 600
+		    pass
 		print "tps="+str(tps)
-		print "This value is stored when we get no data from twitter c.all_tpm[animoID]="+str(c.all_tpm[animoID])
+		print "Good value! c.all_tpm[animoID]="+str(c.all_tpm[animoID])
         else:
                 print 'We shouldnt be here, as this is bad'
                 #as failure we take the last value of tps, not bad :-)
@@ -127,7 +144,7 @@ def parse_tps(animoID,c):
         return tps,b
         
 def setserial(animoID,flash):
-        ser = serial.Serial('/dev/ttyACM0')
+        ser = serial.Serial('/dev/tty.usbmodemfd131')
         print ser.portstr  # check which port was really used
         print 'writing animoID to LED= '+str(animoID)
         ser.write(str(animoID))      # write a string
@@ -189,7 +206,7 @@ def register_plot(all_tpm,ratios_animo_mundial,ratios_temperamento):
 
 def write_to_html(intenID,animoID):
         content = {}
-        f = open('/home/user/Dropbox/Public/animo.html', 'w')
+        f = open('/Users/dani/Dropbox/Public/animo.html', 'w')
         s ="""<html> 
             <head> 
 	    <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"/> 
@@ -200,13 +217,13 @@ def write_to_html(intenID,animoID):
         s+= """<img src="./all_tpm.png" alt="Emoci&oacute;n instant&aacute;nea" /> 
             <img src="./ratios_animo.png" alt="Animo ratio" /> 
             <img src="./ratios_temperamento.png" alt="Temperamento ratio" />""" 
-        dirList=os.listdir('/home/user/Dropbox/Public/alerts/')
+        dirList=os.listdir('/Users/dani/Dropbox/Public/alerts/')
 	s+= """<p> Puedes ver como he dise&ntilde;ado todo <a href="http://madremiamadremiaque.blogspot.com/2011/02/midiendo-el-animo-del-mundo.html">AQU&Iacute;</a></p>"""
         s+= """<table border="1">"""
         s+="""<tr><td>Alertas</td><td>Timestamp</td></tr>"""
 	#build up directory of time stamps
         for item in dirList:
-	    full_path='/home/user/Dropbox/Public/alerts/'+str(item)
+	    full_path='/Users/dani/Dropbox/Public/alerts/'+str(item)
 	    content[item] = os.path.getmtime(full_path)
         #sort keys, based on time stamps
 	items = content.keys()
@@ -222,7 +239,7 @@ def write_to_html(intenID,animoID):
 
 def register_alert(text_msg,animoID):
         print 'Writing data to alerts'
-        f = open('/home/user/Dropbox/Public/alerts/alerts_'+str(emotion_dict[animoID])+'_'+str(_time.time())+'.txt', 'a')
+        f = open('/Users/dani/Dropbox/Public/alerts/alerts_'+str(emotion_dict[animoID])+'_'+str(_time.time())+'.txt', 'a')
         f.write(text_msg)
         f.close
         
