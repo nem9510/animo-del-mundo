@@ -42,6 +42,7 @@ class IntensidadAnimo:
 	EXTREMO=2
 NUM_INTENSIDADES = 3
 
+
 class AnimodelMundo:
 	"""Abstraccion del Animo mundial"""
 	def __init__(self, factor_suavizado_emocion, factor_suavizado_animo, moderado_umbral_animo,
@@ -79,7 +80,7 @@ class AnimodelMundo:
 				#aplicamos exponential moving averages
 				print 'calculating===>'+'animo_mundial_avg='+str(self.animo_mundial_avg[animoID])+'*'+'(1 -'+str(a)+')'+'+'+str(tpm)+'*'+str(a)
 				self.animo_mundial_avg[animoID] = self.animo_mundial_avg[animoID] * (1 - a) + tpm * a
-				print 'timestamp: '+str(self.timestamp)+'animo_mundial_avg=='+str(self.animo_mundial_avg)
+				print 'timestamp: '+str(self.timestamp)+'animo_mundial_avg=='+str(self.animo_mundial_avg)+'\n'
 			
 	def calcula_intensidad_animo_actual(self):
 		#aqui calculamos como de intenso es el ánimo actual
