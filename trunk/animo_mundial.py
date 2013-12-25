@@ -41,9 +41,14 @@ from subprocess import call
 import os
 import time
 
+#twitter api 1.1 needs
+import twitter
+import twitter_login
+
 
 #AMOR_QUERY = '"te quiero mucho" OR "te quiero más" OR "amo tanto" OR "amo tanto" OR "todo mi amor" OR "muy enamorado" OR "tan enamorada"'
-#IRA_QUERY='"te odio" OR "siento rabia" OR "le odio" OR "estoy furioso" OR "estoy furiosa" OR "crispado" OR "estoy cabreado"'
+#IRA_QUERY='"te odio" OR "siento rabia" OR "le odio" OR "estoy furioso" OR "estoy furiosa" OR crispado OR "estoy cabreado"'
+#IRA_QUERY='"te odio" OR "siento rabia" OR "le odio" OR "estoy furioso" OR "estoy cabreado"'
 #ALEGRIA_QUERY='"mas feliz" OR "bastante feliz" OR "tan feliz" OR "muy feliz" OR gozo OR júbilo OR deleite OR alborozo OR juerga'
 #SORPRESA_QUERY='"no me lo puedo creer" OR increible OR asombro OR "me ha sorprendido" OR "te ha sorprendido" OR "cogido por sorpresa"'
 #ENVIDIA_QUERY='ambiciono OR codicio OR "mucha envidia" OR "yo quiero ser" OR "por que no puedo" OR envidio OR celoso'
@@ -88,49 +93,48 @@ intensity_dict = {
 
 def time_string_to_stamp(date_string):
         #tweeter is using UTC!
-        dt = datetime.strptime(date_string, "%a, %d %b %Y %H:%M:%S +0000")
+        dt = datetime.strptime(date_string, "%a %b %d %H:%M:%S +0000 %Y")
         tt = (dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second, dt.weekday(), 0, -1)
         stamp = _time.mktime(tt)
         return stamp
 
-def parse_tps(animoID,c):
+def parse_tps(animoID,c,t):
         print 'query_dict[animoID]= '+query_dict[animoID]
-        #query can be done either json or atom
-        base_url='http://search.twitter.com/search.json?q='+query_dict[animoID]+'&rpp=60&lang=es&result_type=recent'
         f = 0
         try:
-                f = urllib2.urlopen(base_url, timeout = 3)
-	#except urllib2.URLError, (err):
+		#we take more than 30 results as searh api is doing funky things and sometimes returning less results than
+		#the ones we query for
+                f = t.search.tweets(q=query_dict[animoID], lang="es", locale="es", result_type="recent",count="60")
 	except Exception, (err):
                 print "Opening error(%s)" % (err)
 		pass
 	try:
-		a = json.loads(f.read())
+		a = f
 		b = json.dumps(a, sort_keys=True, indent=4)
+		print "number of elements: "+str(len(a['statuses']))
 	except Exception,e:
 		print "We did our best but couldn't parse json from twitter due to: " + str(e)
 		a = dict()
-		#a['results'[0]] = 0
-		a[('results')] = '0'
+		a[('statuses')] = '0'
 		b =''
 		pass
-        if (f != 0 and len(a['results']) == 60 and b != None):
+        if (f != 0 and len(a['statuses']) >= 30 and b != None):
                 #debug
-                first_tw_time = a['results'][0]['created_at']
+                first_tw_time = a['statuses'][0]['created_at']
 		print "first_tw_time="+first_tw_time
-                last_tw_time= a['results'][59]['created_at']
+                last_tw_time= a['statuses'][29]['created_at']
 		print "last_tw_time"+last_tw_time
                 tstart = time_string_to_stamp(first_tw_time)
 		print "tstart="+str(tstart)
                 tend = time_string_to_stamp(last_tw_time)
 		print "tend="+str(tend)
 		try:   
-		    tps = 60 / (tstart - tend)
+		    tps = 30 / (tstart - tend)
         	except Exception, (err):
                     print "Exception error(%s)" % (err)
 		    if ((tstart -tend) == 0):
-			#aprox, probably more than 600 tweets
-			tps = 600
+			#aprox, probably more than 300 tweets
+			tps = 300
 		    pass
 		print "tps="+str(tps)
 		print "Good value! c.all_tpm[animoID]="+str(c.all_tpm[animoID])
@@ -138,13 +142,13 @@ def parse_tps(animoID,c):
                 print 'We shouldnt be here, as this is bad'
                 #as failure we take the last value of tps, not bad :-)
 		#be careful what you are working with tps or tpm
-                tps = c.all_tpm[animoID] / 60
+                tps = c.all_tpm[animoID] / 30
                 b =''
         #returning the tweets per second and all the message just in case we have an alert
         return tps,b
         
 def setserial(animoID,flash):
-        ser = serial.Serial('/dev/tty.usbmodemfd131')
+        ser = serial.Serial('/dev/ttyACM0')
         print ser.portstr  # check which port was really used
         print 'writing animoID to LED= '+str(animoID)
         ser.write(str(animoID))      # write a string
@@ -206,7 +210,7 @@ def register_plot(all_tpm,ratios_animo_mundial,ratios_temperamento):
 
 def write_to_html(intenID,animoID):
         content = {}
-        f = open('/Users/dani/Dropbox/Public/animo.html', 'w')
+        f = open('/home/dani/Dropbox/Public/animo.html', 'w')
         s ="""<html> 
             <head> 
 	    <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"/> 
@@ -217,13 +221,13 @@ def write_to_html(intenID,animoID):
         s+= """<img src="./all_tpm.png" alt="Emoci&oacute;n instant&aacute;nea" /> 
             <img src="./ratios_animo.png" alt="Animo ratio" /> 
             <img src="./ratios_temperamento.png" alt="Temperamento ratio" />""" 
-        dirList=os.listdir('/Users/dani/Dropbox/Public/alerts/')
+        dirList=os.listdir('/home/dani/Dropbox/Public/alerts/')
 	s+= """<p> Puedes ver como he dise&ntilde;ado todo <a href="http://madremiamadremiaque.blogspot.com/2011/02/midiendo-el-animo-del-mundo.html">AQU&Iacute;</a></p>"""
         s+= """<table border="1">"""
         s+="""<tr><td>Alertas</td><td>Timestamp</td></tr>"""
 	#build up directory of time stamps
         for item in dirList:
-	    full_path='/Users/dani/Dropbox/Public/alerts/'+str(item)
+	    full_path='/home/dani/Dropbox/Public/alerts/'+str(item)
 	    content[item] = os.path.getmtime(full_path)
         #sort keys, based on time stamps
 	items = content.keys()
@@ -239,7 +243,7 @@ def write_to_html(intenID,animoID):
 
 def register_alert(text_msg,animoID):
         print 'Writing data to alerts'
-        f = open('/Users/dani/Dropbox/Public/alerts/alerts_'+str(emotion_dict[animoID])+'_'+str(_time.time())+'.txt', 'a')
+        f = open('/home/dani/Dropbox/Public/alerts/alerts_'+str(emotion_dict[animoID])+'_'+str(_time.time())+'.txt', 'a')
         f.write(text_msg)
         f.close
         
@@ -248,12 +252,13 @@ def main():
         #while starting the code, but otherwise is useful for testing email and flashing.
         c = AnimodelMundo(0.6,0.05,2.5,4,[0.18,0.18,0.35,0.04,0.06, 0.04,0.11],'None')
         msg_dict = {}
+	t = twitter_login.login()
         #led will not flash unless something big happens
         while True:
                 flash = False
                 #rellenando todos los tps
                 for animoID in range(NUM_TIPOS_ANIMO):
-                        tps,msg_dict[animoID] = parse_tps(animoID,c)
+                        tps,msg_dict[animoID] = parse_tps(animoID,c,t)
                         #trabajemos con tweets por minuto
                         tpm = tps * 60
                         c.registrar_tweets(animoID,tpm)
